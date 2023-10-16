@@ -1,19 +1,40 @@
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Image, TouchableOpacity, TouchableWithoutFeedback, Modal, Alert, ImageBackground, TextInput, Button } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { ScrollView, StyleSheet, Text, View, Image, TouchableOpacity, TouchableWithoutFeedback, Modal, Alert, ImageBackground, TextInput, Button, Dimensions, FlatList } from 'react-native';
 import { Notification, SearchNormal, Receipt21, Clock, Message, ArrowRight2, Setting2, Like1, Icon, } from 'iconsax-react-native';
 import { fontType, colors } from './src/assets/theme';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import Carousel, { Pagination } from 'react-native-snap-carousel';
 
 const kategoriArr = [
   { id: 1, imageUrl: 'https://i.pinimg.com/564x/de/31/5d/de315d4206ab8ea511e7de729ead1146.jpg', name: 'Lukisan' },
   { id: 2, imageUrl: 'https://i.pinimg.com/564x/0b/10/5d/0b105d246e1051a2b57a79becf03e34c.jpg', name: 'Patung' }
-]
+];
+
+const sliderImages = [
+  {
+    id: 1,
+    image: 'https://source.unsplash.com/1024x768/?nature',
+    title: 'Slide 1',
+  },
+  {
+    id: 2,
+    image: 'https://source.unsplash.com/1024x768/?water',
+    title: 'Slide 2',
+  },
+];
 
 const HomeScreen = () => {
+  const { width: screenWidth } = Dimensions.get('window');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const [index, setIndex] = useState(0);
+  const isCarousel = useRef(null);
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  const sliderWidth = screenWidth;
+  const itemWidth = screenWidth * 8;
 
   const handleSearchPress = (text) => {
     setSearchText(text);
@@ -36,6 +57,36 @@ const HomeScreen = () => {
     toggleModal();
     // Tambahkan kode untuk tindakan logout di sini
   };
+
+  const renderItem = ({ item }) => {
+    return (
+      <View style={{ paddingTop: 10 }}>
+        <ImageBackground
+          style={{
+            width: 'auto',
+            height: 200,
+          }}
+          resizeMode="cover"
+          source={{ uri: item.image }}
+        >
+          <View style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.2)',
+          }}></View>
+          <View style={itemKategori.cardContent}>
+            <View style={itemKategori.textContainer}>
+              <Text style={itemKategori.cardTitle}>{item.title}</Text>
+            </View>
+          </View>
+        </ImageBackground>
+      </View>
+    );
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView>
@@ -75,6 +126,54 @@ const HomeScreen = () => {
             </View>
           </View>
         </View>
+        <View>
+          <Carousel
+            ref={isCarousel}
+            data={sliderImages}
+            renderItem={renderItem}
+            sliderWidth={sliderWidth}
+            itemWidth={screenWidth}
+            layout={'default'}
+            autoplay
+            loop
+            onSnapToItem={index => setActiveSlide(index)}
+          />
+          <Pagination
+            dotsLength={sliderImages.length}
+            activeDotIndex={activeSlide}
+            containerStyle={{
+              paddingTop: 20,
+              paddingBottom: 20,
+            }}
+            dotColor={'black'}
+            inactiveDotColor={'gray'}
+            dotStyle={{
+              width: 10,
+              height: 10,
+              borderRadius: 5,
+              marginHorizontal: 8,
+            }}
+            inactiveDotOpacity={0.6} // Opasitas dot yang tidak aktif
+            inactiveDotScale={0.8} // Ukuran dot yang tidak aktif
+          />
+          {/* <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <FlatList
+              data={sliderImages}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item, index }) => (
+                <Text style={[styles.paginationText, activeSlide === index && styles.activePaginationText]}>
+                  &bull;
+                </Text>
+              )}
+            />
+          </View> */}
+        </View>
         <KategoriSeniRupa />
         <SeniPopuler />
         <JelajahiBerdasarkanDaerah />
@@ -110,7 +209,7 @@ const HomeScreen = () => {
 
 const KategoriSeniRupa = () => {
   return (
-    <View style={styles.headerSeniPopuler}>
+    <View style={{ paddingHorizontal: 24, }}>
       <View style={styles.seniPopulerTitleContainer}>
         <Text style={styles.textSeni}>Kategori Karya Seni</Text>
         <ArrowRight2 color={colors.black()} variant="Linear" size={20} />
@@ -720,8 +819,15 @@ const itemSeniDaerah = StyleSheet.create({
     borderRadius: 5,
   },
 });
-
 const styles = StyleSheet.create({
+  paginationText: {
+    fontSize: 24,
+    margin: 5,
+    color: 'gray',
+  },
+  activePaginationText: {
+    color: 'black',
+  },
   container: {
     flex: 1,
     backgroundColor: colors.white(),
