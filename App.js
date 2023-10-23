@@ -6,35 +6,16 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Carousel, { Pagination } from 'react-native-snap-carousel';
-
-const kategoriArr = [
-  { id: 1, imageUrl: 'https://i.pinimg.com/564x/de/31/5d/de315d4206ab8ea511e7de729ead1146.jpg', name: 'Lukisan' },
-  { id: 2, imageUrl: 'https://i.pinimg.com/564x/0b/10/5d/0b105d246e1051a2b57a79becf03e34c.jpg', name: 'Patung' }
-];
-
-const sliderImages = [
-  {
-    id: 1,
-    image: 'https://source.unsplash.com/1024x768/?nature',
-    title: 'Slide 1',
-  },
-  {
-    id: 2,
-    image: 'https://source.unsplash.com/1024x768/?water',
-    title: 'Slide 2',
-  },
-];
+import { sliderImages, kategoriArr } from './data';
 
 const HomeScreen = () => {
   const { width: screenWidth } = Dimensions.get('window');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const [index, setIndex] = useState(0);
   const isCarousel = useRef(null);
   const [activeSlide, setActiveSlide] = useState(0);
 
   const sliderWidth = screenWidth;
-  const itemWidth = screenWidth * 8;
 
   const handleSearchPress = (text) => {
     setSearchText(text);
@@ -50,12 +31,10 @@ const HomeScreen = () => {
 
   const handleEditProfile = () => {
     toggleModal();
-    // Tambahkan kode untuk tindakan edit profil di sini
   };
 
   const handleLogout = () => {
     toggleModal();
-    // Tambahkan kode untuk tindakan logout di sini
   };
 
   const renderItem = ({ item }) => {
@@ -153,26 +132,9 @@ const HomeScreen = () => {
               borderRadius: 5,
               marginHorizontal: 8,
             }}
-            inactiveDotOpacity={0.6} // Opasitas dot yang tidak aktif
-            inactiveDotScale={0.8} // Ukuran dot yang tidak aktif
+            inactiveDotOpacity={0.6}
+            inactiveDotScale={0.8}
           />
-          {/* <View style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            <FlatList
-              data={sliderImages}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item, index }) => (
-                <Text style={[styles.paginationText, activeSlide === index && styles.activePaginationText]}>
-                  &bull;
-                </Text>
-              )}
-            />
-          </View> */}
         </View>
         <KategoriSeniRupa />
         <SeniPopuler />
@@ -293,9 +255,6 @@ const SeniPopuler = () => {
                   <Text style={itemSeniPopuler.cardTitle}>Batik</Text>
                   <Text style={itemSeniPopuler.cardText}>Kerajinan yang sangat terkenal di berbagai daerah</Text>
                 </View>
-                {/* <View style={itemSeniPopuler.cardIcon}>
-                  <ArrowRight2 color={colors.white()} variant="Linear" size={20} />
-                </View> */}
               </View>
             </ImageBackground>
           </View>
@@ -313,9 +272,6 @@ const SeniPopuler = () => {
                   <Text style={itemSeniPopuler.cardTitle}>Lukisan Bali</Text>
                   <Text style={itemSeniPopuler.cardText}>Lukisan yang dibuat oleh seniman dari Bali, biasanya menggambarkan tarian Bali</Text>
                 </View>
-                {/* <View style={itemSeniPopuler.cardIcon}>
-                  <ArrowRight2 color={colors.white()} variant="Linear" size={20} />
-                </View> */}
               </View>
             </ImageBackground>
           </View>
@@ -969,21 +925,5 @@ const styles = StyleSheet.create({
   },
 
 });
-const category = StyleSheet.create({
-  item: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 25,
-    alignItems: 'center',
-    backgroundColor: colors.grey(0.08),
-    marginHorizontal: 5
-  },
-  title: {
-    fontFamily: fontType['Pjs-SemiBold'],
-    fontSize: 14,
-    lineHeight: 18,
-    color: colors.grey(),
-  },
-})
 
 export default App;
