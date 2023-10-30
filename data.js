@@ -22,3 +22,25 @@ export const sliderImages = [
         title: 'Patung',
     },
 ];
+export const dataExplore = [
+    {
+        id: 1,
+        image: 'https://i.pinimg.com/564x/98/da/43/98da43a868c7441db7e26117217eb93f.jpg',
+        name: 'Patung Hanuman',
+    },
+    {
+        id: 2,
+        image: 'https://i.pinimg.com/564x/5a/35/af/5a35af6227b2d11bcac61078eeb56b28.jpg',
+        name: 'Patung Kumbakarna Laga',
+    },
+    {
+        id: 3,
+        image: 'https://i.pinimg.com/564x/50/43/a6/5043a6e66537b364d3694f30cdfbc2f1.jpg',
+        name: 'Lukisan Pura Bali'
+    },
+    {
+        id: 3,
+        image: 'https://i.pinimg.com/564x/81/19/ba/8119ba5d304122c9c63b43bf18d0c472.jpg',
+        name: 'Reog Ponorogo'
+    },
+];
