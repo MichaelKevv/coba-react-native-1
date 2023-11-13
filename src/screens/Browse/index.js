@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity, TextInput, ImageBackground } from 'react-native';
 import { dataExplore, dataFeed, dataGaleri, dataKategori, kategoriArr } from '../../../data';
 import { Heart, SearchNormal } from 'iconsax-react-native';
+import { useNavigation } from '@react-navigation/native';
+import { ListBrowse } from '../../components';
 
-const Card = ({ title, image }) => (
-  <View style={styles.card}>
+const Card = ({ id, title, image }) => (
+  <TouchableOpacity style={styles.card}>
     <ImageBackground source={{ uri: image }} style={styles.cardImage}>
       <View style={styles.darkOverlay}></View>
       <View style={styles.cardIcon}>
@@ -12,7 +14,7 @@ const Card = ({ title, image }) => (
       </View>
     </ImageBackground>
 
-  </View>
+  </TouchableOpacity>
 );
 
 const ItemCategory = ({ item, onPress, color }) => {
@@ -28,7 +30,7 @@ const ItemCategory = ({ item, onPress, color }) => {
 const FlatListCategory = () => {
   const [selected, setSelected] = useState(1);
   const renderItem = ({ item }) => {
-    const color = item.id === selected ? 'black' : 'grey';
+    const color = item.id === selected ? 'gold' : 'white';
     return (
       <ItemCategory
         item={item}
@@ -77,12 +79,7 @@ export default function BrowseScreen() {
       </View>
       <View style={{ paddingHorizontal: 16, }}>
         <Text style={{ color: 'black', fontSize: 16, fontWeight: 'bold', marginHorizontal: 8 }}>Jelajahi Seni</Text>
-        <FlatList
-          data={dataExplore}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          renderItem={({ item }) => <Card title={item.name} image={item.image} />}
-        />
+        <ListBrowse data={dataExplore} />
       </View>
     </View>
   );
@@ -147,9 +144,7 @@ const category = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 25,
     alignItems: 'center',
-    backgroundColor: 'rgb(230, 227, 227)',
-    borderColor: 'black',
-    borderWidth: 1,
+    backgroundColor: 'rgb(28, 28, 28)',
   },
   title: {
     fontSize: 14,

@@ -1,11 +1,18 @@
 import React, { useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Image, TouchableOpacity, TouchableWithoutFeedback, Modal, Alert, ImageBackground, TextInput, Button, Dimensions, FlatList } from 'react-native';
+import { Animated, ScrollView, StyleSheet, Text, View, Image, TouchableOpacity, TouchableWithoutFeedback, Modal, Alert, ImageBackground, TextInput, Button, Dimensions, FlatList } from 'react-native';
 import { Notification, SearchNormal, Receipt21, Clock, Message, ArrowRight2, Setting2, Like1, Icon, } from 'iconsax-react-native';
-import { fontType, colors } from '../../assets/theme';
 import Carousel, { Pagination } from 'react-native-snap-carousel';
-import { sliderImages, kategoriArr } from '../../../data';
+import { sliderImages, kategoriArr, dataBerita } from '../../../data';
+import { ListBerita } from '../../components';
 
-export default function HomeScreen()  {
+export default function HomeScreen () {
+  const scrollY = new Animated.Value(0); // Nilai awal scroll Y
+
+  // Fungsi yang akan dijalankan saat terjadi perubahan scroll
+  const handleScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+    { useNativeDriver: false }
+  );
   const { width: screenWidth } = Dimensions.get('window');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [searchText, setSearchText] = useState('');
@@ -28,15 +35,17 @@ export default function HomeScreen()  {
 
   const handleEditProfile = () => {
     toggleModal();
+    // Tambahkan kode untuk tindakan edit profil di sini
   };
 
   const handleLogout = () => {
     toggleModal();
+    // Tambahkan kode untuk tindakan logout di sini
   };
 
   const renderItem = ({ item }) => {
     return (
-      <View style={{ paddingTop: 10, marginHorizontal: 24 }}>
+      <View style={{ paddingTop: 20, paddingLeft: 24, paddingRight: 24 }}>
         <ImageBackground
           style={{
             width: 'auto',
@@ -65,7 +74,25 @@ export default function HomeScreen()  {
 
   return (
     <View style={styles.container}>
-      <ScrollView>
+      <Animated.View style={[styles.headerLogo, {
+        elevation: scrollY.interpolate({
+          inputRange: [0, 1], 
+          outputRange: [0, 2], 
+          extrapolate: 'clamp',
+        })
+      }]}>
+        <View style={styles.leftContainer}>
+          <Image
+            source={require('../../assets/images/logo1.png')}
+            style={styles.logo}
+          />
+        </View>
+        <View style={styles.rightContainer}>
+          <Notification color={'black'} variant="Linear" size={24} />
+          {/* <Setting2 color={'black'} variant="Linear" size={24} /> */}
+        </View>
+      </Animated.View>
+      <ScrollView onScroll={handleScroll} scrollEventThrottle={16}>
         <View style={styles.header}>
           <View style={styles.leftContainer}>
             <TouchableOpacity onPress={handleProfilePress}>
@@ -81,10 +108,6 @@ export default function HomeScreen()  {
               <Text style={styles.welcomeText}>Selamat Datang Kembali</Text>
             </View>
           </View>
-          <View style={styles.rightContainer}>
-            <Notification color={colors.black()} variant="Linear" size={24} />
-            {/* <Setting2 color={colors.black()} variant="Linear" size={24} /> */}
-          </View>
         </View>
         <View style={{ paddingHorizontal: 24, marginTop: 16, }}>
           <View style={styles.searchContainer}>
@@ -97,7 +120,7 @@ export default function HomeScreen()  {
             />
             <View style={styles.searchButtonContainer}>
               <TouchableOpacity style={styles.searchButton}>
-                <SearchNormal color={colors.black()} variant="Linear" size={24} style={styles.icon} />
+                <SearchNormal color={'black'} variant="Linear" size={24} style={styles.icon} />
               </TouchableOpacity>
             </View>
           </View>
@@ -136,7 +159,18 @@ export default function HomeScreen()  {
         <KategoriSeniRupa />
         <SeniPopuler />
         <JelajahiBerdasarkanDaerah />
-        <BeritaSeniRupa />
+        <View style={styles.headerSeniDaerah}>
+          <View style={styles.seniPopulerTitleContainer}>
+            <Text style={styles.textSeni}>Rekomendasi Berita</Text>
+            <Text style={styles.textViewAll}>View All</Text>
+          </View>
+        </View>
+        <View style={{ marginBottom: 80 }}>
+          {dataBerita.map((item, index) => (
+            <ListBerita item={item} key={index} />
+          ))}
+        </View>
+
       </ScrollView>
       <Modal
         visible={isModalVisible}
@@ -162,7 +196,6 @@ export default function HomeScreen()  {
         </TouchableWithoutFeedback>
       </Modal>
     </View>
-
   );
 };
 
@@ -171,7 +204,7 @@ const KategoriSeniRupa = () => {
     <View style={{ paddingHorizontal: 24, }}>
       <View style={styles.seniPopulerTitleContainer}>
         <Text style={styles.textSeni}>Kategori Karya Seni</Text>
-        <Text style={styles.textSelengkapnya}>View All</Text>
+        <Text style={styles.textViewAll}>View All</Text>
       </View>
 
       <View style={styles.listBlog}>
@@ -212,7 +245,7 @@ const SeniPopuler = () => {
     <View style={styles.headerSeniPopuler}>
       <View style={styles.seniPopulerTitleContainer}>
         <Text style={styles.textSeni}>Karya Seni Terpopuler</Text>
-        <ArrowRight2 color={colors.black()} variant="Linear" size={20} />
+        <Text style={styles.textViewAll}>View All</Text>
       </View>
 
       <View style={styles.listBlog}>
@@ -252,6 +285,9 @@ const SeniPopuler = () => {
                   <Text style={itemSeniPopuler.cardTitle}>Batik</Text>
                   <Text style={itemSeniPopuler.cardText}>Kerajinan yang sangat terkenal di berbagai daerah</Text>
                 </View>
+                {/* <View style={itemSeniPopuler.cardIcon}>
+                  <ArrowRight2 color={'white'} variant="Linear" size={20} />
+                </View> */}
               </View>
             </ImageBackground>
           </View>
@@ -283,7 +319,7 @@ const JelajahiBerdasarkanDaerah = () => {
     <View style={styles.headerSeniDaerah}>
       <View style={styles.seniPopulerTitleContainer}>
         <Text style={styles.textSeni}>Jelajahi Berdasarkan Daerah</Text>
-        <ArrowRight2 color={colors.black()} variant="Linear" size={20} />
+        <Text style={styles.textViewAll}>View All</Text>
       </View>
       <View style={styles.listBlog}>
         <ScrollView
@@ -333,150 +369,6 @@ const JelajahiBerdasarkanDaerah = () => {
   );
 };
 
-const BeritaSeniRupa = () => {
-  return (
-    <View style={{ ...styles.headerSeniDaerah, marginBottom: 80 }}>
-      <View style={styles.seniPopulerTitleContainer}>
-        <Text style={styles.textSeni}>Berita Tentang Seni Rupa</Text>
-        <ArrowRight2 color={colors.black()} variant="Linear" size={20} />
-      </View>
-      <View style={beritaSeniRupa.listCard}>
-        <View style={beritaSeniRupa.cardItem}>
-          <Image
-            style={beritaSeniRupa.cardImage}
-            source={{
-              uri: 'https://cdn1-production-images-kly.akamaized.net/uqDKZsRJgae3f1rJ5m_3bgFjDrc=/1231x710/smart/filters:quality(75):strip_icc():format(webp)/kly-media-production/medias/2987401/original/083020200_1575531338-20191205-Berlatih-Melukis-di-Bundaran-HI-Jakarta-3.jpg',
-            }}
-          />
-          <View style={beritaSeniRupa.cardContent}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-              }}>
-              <View style={{ gap: 5, width: '70%' }}>
-                <Text style={beritaSeniRupa.cardCategory}>Melukis</Text>
-                <Text style={beritaSeniRupa.cardTitle}>
-                  Berlatih Melukis di Bundaran HI Jakarta
-                </Text>
-              </View>
-              <Receipt21
-                color={colors.grey(0.6)}
-                variant="Linear"
-                size={20}
-              />
-            </View>
-            <View style={beritaSeniRupa.cardInfo}>
-              <Clock
-                size={10}
-                variant="Linear"
-                color={colors.grey(0.6)}
-              />
-              <Text style={beritaSeniRupa.cardText}>05 Des 2019</Text>
-              {/* <Message
-                size={10}
-                variant="Linear"
-                color={colors.grey(0.6)}
-              />
-              <Text style={beritaSeniRupa.cardText}>89</Text> */}
-            </View>
-          </View>
-        </View>
-
-      </View>
-      <View style={beritaSeniRupa.listCard}>
-        <View style={beritaSeniRupa.cardItem}>
-          <Image
-            style={beritaSeniRupa.cardImage}
-            source={{
-              uri: 'https://cdn1-production-images-kly.akamaized.net/3MK-h-UyvFnxiuHBYhJx1YayIT8=/640x360/smart/filters:quality(75):strip_icc():format(webp)/kly-media-production/medias/2817707/original/025072600_1559031869-nippon_3_673x373.jpg',
-            }}
-          />
-          <View style={beritaSeniRupa.cardContent}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-              }}>
-              <View style={{ gap: 5, width: '70%' }}>
-                <Text style={beritaSeniRupa.cardCategory}>Kerajinan</Text>
-                <Text style={beritaSeniRupa.cardTitle}>
-                  Vas Bunga Merupakan Contoh dari Kerajinan Keramik
-                </Text>
-              </View>
-              <Receipt21
-                color={colors.grey(0.6)}
-                variant="Linear"
-                size={20}
-              />
-            </View>
-            <View style={beritaSeniRupa.cardInfo}>
-              <Clock
-                size={10}
-                variant="Linear"
-                color={colors.grey(0.6)}
-              />
-              <Text style={beritaSeniRupa.cardText}>21 Sep 2023</Text>
-              {/* <Message
-                size={10}
-                variant="Linear"
-                color={colors.grey(0.6)}
-              />
-              <Text style={beritaSeniRupa.cardText}>89</Text> */}
-            </View>
-          </View>
-        </View>
-
-      </View>
-    </View>
-
-  );
-};
-
-const beritaSeniRupa = StyleSheet.create({
-  listCard: {
-    paddingVertical: 10,
-  },
-  cardItem: {
-    backgroundColor: 'rgba(168, 107, 71, 0.05)',
-    flexDirection: 'row',
-    borderRadius: 10,
-  },
-  cardCategory: {
-    color: 'rgba(168, 107, 71, 1)',
-    fontSize: 10,
-    fontFamily: fontType['Pjs-SemiBold'],
-  },
-  cardTitle: {
-    fontSize: 14,
-    fontFamily: fontType['Pjs-Bold'],
-    color: 'black'
-  },
-  cardText: {
-    fontSize: 10,
-    fontFamily: fontType['Pjs-Medium'],
-    color: 'rgba(168, 107, 71, 0.6)',
-  },
-  cardImage: {
-    width: 100,
-    height: 'auto',
-    borderRadius: 10,
-    resizeMode: 'cover',
-  },
-  cardInfo: {
-    flexDirection: 'row',
-    gap: 5,
-    alignItems: 'center',
-  },
-  cardContent: {
-    gap: 10,
-    justifyContent: 'space-between',
-    paddingRight: 10,
-    paddingLeft: 15,
-    flex: 1,
-    paddingVertical: 10,
-  },
-});
 const itemKategori = StyleSheet.create({
   cardItem: {
     width: 'auto',
@@ -520,19 +412,19 @@ const itemKategori = StyleSheet.create({
     paddingRight: 8,
   },
   cardTitle: {
-    fontFamily: fontType['Pjs-Bold'],
+
     fontSize: 14,
-    color: colors.white(),
+    color: 'white',
   },
   cardText: {
     fontSize: 10,
-    color: colors.white(),
-    fontFamily: fontType['Pjs-Medium'],
+    color: 'white',
+
   },
   cardIcon: {
-    backgroundColor: colors.black(0.5),
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     padding: 5,
-    borderColor: colors.white(),
+    borderColor: 'white',
     borderWidth: 0.5,
     borderRadius: 5,
     width: 30,
@@ -573,19 +465,19 @@ const itemSeniPopuler = StyleSheet.create({
     paddingRight: 8,
   },
   cardTitle: {
-    fontFamily: fontType['Pjs-Bold'],
+
     fontSize: 14,
-    color: colors.white(),
+    color: 'white',
   },
   cardText: {
     fontSize: 10,
-    color: colors.white(),
-    fontFamily: fontType['Pjs-Medium'],
+    color: 'white',
+
   },
   cardIcon: {
-    backgroundColor: colors.black(0.5),
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     padding: 5,
-    borderColor: colors.white(),
+    borderColor: 'white',
     borderWidth: 0.5,
     borderRadius: 5,
     width: 30,
@@ -613,24 +505,29 @@ const itemSeniDaerah = StyleSheet.create({
     maxWidth: '60%',
   },
   cardTitle: {
-    fontFamily: fontType['Pjs-Bold'],
+
     fontSize: 14,
-    color: colors.white(),
+    color: 'white',
   },
   cardText: {
     fontSize: 10,
-    color: colors.white(),
-    fontFamily: fontType['Pjs-Medium'],
+    color: 'white',
+
   },
   cardIcon: {
-    backgroundColor: colors.white(0.33),
+    backgroundColor: 'rgba(255, 255, 255, 0.33)',
     padding: 5,
-    borderColor: colors.white(),
+    borderColor: 'white',
     borderWidth: 0.5,
     borderRadius: 5,
   },
 });
 const styles = StyleSheet.create({
+  logo: {
+    width: 150,
+    height: 100,
+    resizeMode: 'contain',
+  },
   paginationText: {
     fontSize: 24,
     margin: 5,
@@ -641,14 +538,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: colors.white(),
-  },
-  imageBanner: {
-    backgroundColor: 'rgba(168, 107, 71, 0.3)',
-    width: 'auto',
-    height: 200,
-    borderBottomLeftRadius: 60,
-    borderBottomRightRadius: 60,
+    backgroundColor: 'white',
   },
   headerSeniPopuler: {
     paddingHorizontal: 24,
@@ -661,21 +551,27 @@ const styles = StyleSheet.create({
   textSeni: {
     fontSize: 20,
     marginRight: 8,
-    fontWeight: 'bold',
-    color: 'black'
+    color: 'black',
   },
-  textSelengkapnya: {
-    fontSize: 14,
-    marginRight: 8,
+  textViewAll: {
+    color: 'rgb(0, 118, 209)',
     fontWeight: 'bold',
-    color: 'rgb(3, 132, 252)',
+    fontSize: 14,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 24,
-    marginTop: 15,
+    marginTop: 10,
+    backgroundColor: 'white',
+  },
+  headerLogo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    height: 60,
     backgroundColor: 'white',
   },
   leftContainer: {
