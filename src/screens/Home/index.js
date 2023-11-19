@@ -5,14 +5,17 @@ import Carousel, { Pagination } from 'react-native-snap-carousel';
 import { sliderImages, kategoriArr, dataBerita } from '../../../data';
 import { ListBerita } from '../../components';
 
-export default function HomeScreen () {
-  const scrollY = new Animated.Value(0); // Nilai awal scroll Y
-
-  // Fungsi yang akan dijalankan saat terjadi perubahan scroll
-  const handleScroll = Animated.event(
-    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-    { useNativeDriver: false }
-  );
+export default function HomeScreen() {
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const diffClampY = Animated.diffClamp(scrollY, 0, 52);
+  const headerY = diffClampY.interpolate({
+    inputRange: [0, 52],
+    outputRange: [0, -52],
+  });
+  const bottomBarY = diffClampY.interpolate({
+    inputRange: [0, 52],
+    outputRange: [0, 52],
+  });
   const { width: screenWidth } = Dimensions.get('window');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [searchText, setSearchText] = useState('');
@@ -52,12 +55,14 @@ export default function HomeScreen () {
             height: 200,
           }}
           resizeMode="cover"
+          imageStyle={{borderRadius: 10,}}
           source={{ uri: item.image }}
         >
           <View style={{
             position: 'absolute',
             top: 0,
             left: 0,
+            borderRadius: 10,
             width: '100%',
             height: '100%',
             backgroundColor: 'rgba(0, 0, 0, 0.2)',
@@ -74,13 +79,7 @@ export default function HomeScreen () {
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[styles.headerLogo, {
-        elevation: scrollY.interpolate({
-          inputRange: [0, 1], 
-          outputRange: [0, 2], 
-          extrapolate: 'clamp',
-        })
-      }]}>
+      <Animated.View style={[styles.headerLogo, { transform: [{ translateY: headerY }] }]}>
         <View style={styles.leftContainer}>
           <Image
             source={require('../../assets/images/logo1.png')}
@@ -92,7 +91,11 @@ export default function HomeScreen () {
           {/* <Setting2 color={'black'} variant="Linear" size={24} /> */}
         </View>
       </Animated.View>
-      <ScrollView onScroll={handleScroll} scrollEventThrottle={16}>
+      <Animated.ScrollView showsVerticalScrollIndicator={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true },
+        )}>
         <View style={styles.header}>
           <View style={styles.leftContainer}>
             <TouchableOpacity onPress={handleProfilePress}>
@@ -171,7 +174,7 @@ export default function HomeScreen () {
           ))}
         </View>
 
-      </ScrollView>
+      </Animated.ScrollView>
       <Modal
         visible={isModalVisible}
         animationType="none"
@@ -362,7 +365,6 @@ const JelajahiBerdasarkanDaerah = () => {
               </View>
             </ImageBackground>
           </View>
-
         </ScrollView>
       </View>
     </View>
@@ -563,7 +565,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 24,
-    marginTop: 10,
+    marginTop: 60,
     backgroundColor: 'white',
   },
   headerLogo: {
@@ -571,7 +573,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 24,
-    height: 60,
+    height: 52,
+    position:'absolute',
+    zIndex: 1000,
+    top: 0,
+    right: 0,
+    left: 0,
     backgroundColor: 'white',
   },
   leftContainer: {

@@ -3,6 +3,7 @@ import { createStackNavigator, TransitionPresets } from '@react-navigation/stack
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { BrowseDetail, BrowseScreen, HomeScreen, ProfileScreen } from '../screens';
+import { Animated } from 'react-native';
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 const TabArr = [
