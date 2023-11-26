@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { createStackNavigator, TransitionPresets } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { BrowseDetail, BrowseScreen, HomeScreen, ProfileScreen } from '../screens';
+import { AddBrowseForm, BrowseDetail, BrowseScreen, HomeScreen, ProfileScreen } from '../screens';
 import { Animated } from 'react-native';
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -58,6 +58,18 @@ const Router = () => {
       <Stack.Screen
         name="BrowseDetail"
         component={BrowseDetail}
+        options={{
+          headerShown: false,
+          animationEnabled: true,
+          animationTypeForReplace: 'pop',
+          gestureEnabled: true,
+          gestureDirection: 'horizontal',
+          ...TransitionPresets.SlideFromRightIOS,
+        }}
+      />
+      <Stack.Screen
+        name="AddBrowse"
+        component={AddBrowseForm}
         options={{
           headerShown: false,
           animationEnabled: true,

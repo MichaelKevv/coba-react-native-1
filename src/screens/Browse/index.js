@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity, TextInput, ImageBackground } from 'react-native';
 import { dataExplore, dataFeed, dataGaleri, dataKategori, kategoriArr } from '../../../data';
-import { Heart, SearchNormal } from 'iconsax-react-native';
+import { Heart, SearchNormal, Add } from 'iconsax-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { ListBrowse } from '../../components';
-
 const Card = ({ id, title, image }) => (
   <TouchableOpacity style={styles.card}>
     <ImageBackground source={{ uri: image }} style={styles.cardImage}>
@@ -20,8 +19,8 @@ const Card = ({ id, title, image }) => (
 const ItemCategory = ({ item, onPress, color }) => {
   return (
     <TouchableOpacity onPress={onPress}>
-      <View style={category.item}>
-        <Text style={{ ...category.title, color }}>{item.name}</Text>
+      <View style={{...category.item, backgroundColor: color}}>
+        <Text style={{ ...category.title, color:'black' }}>{item.name}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -30,7 +29,7 @@ const ItemCategory = ({ item, onPress, color }) => {
 const FlatListCategory = () => {
   const [selected, setSelected] = useState(1);
   const renderItem = ({ item }) => {
-    const color = item.id === selected ? 'gold' : 'white';
+    const color = item.id === selected ? '#FFC600' : '#FFE58C';
     return (
       <ItemCategory
         item={item}
@@ -52,6 +51,7 @@ const FlatListCategory = () => {
 };
 
 export default function BrowseScreen() {
+  const navigation = useNavigation();
   const [searchText, setSearchText] = useState('');
 
   const handleSearchPress = (text) => {
@@ -81,6 +81,12 @@ export default function BrowseScreen() {
         <Text style={{ color: 'black', fontSize: 16, fontWeight: 'bold', marginHorizontal: 8 }}>Jelajahi Seni</Text>
         <ListBrowse data={dataExplore} />
       </View>
+      <TouchableOpacity
+        style={styles.floatingButton}
+        onPress={() => navigation.navigate("AddBrowse")}
+      >
+        <Add color={'black'} variant="Linear" size={20} />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -137,6 +143,22 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
+  floatingButton: {
+    backgroundColor: '#FFC600',
+    padding: 15,
+    position: 'absolute',
+    bottom: 100,
+    right: 24,
+    borderRadius: 10,
+    shadowColor: '#FFE58C',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+  },
 });
 const category = StyleSheet.create({
   item: {
@@ -144,7 +166,6 @@ const category = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 25,
     alignItems: 'center',
-    backgroundColor: 'rgb(28, 28, 28)',
   },
   title: {
     fontSize: 14,
