@@ -1,8 +1,10 @@
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground, Image } from 'react-native';
-import React, { useState } from 'react';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground, Image, ActivityIndicator } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Like1, Receipt21, Message, Share, More, DocumentDownload } from 'iconsax-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { dataExplore } from '../../../data';
+import axios from 'axios';
+import ActionSheet from 'react-native-actions-sheet';
 
 const BrowseDetail = ({ route }) => {
   const { browseId } = route.params;
@@ -10,7 +12,49 @@ const BrowseDetail = ({ route }) => {
     liked: { variant: 'Linear', color: 'black' },
     bookmarked: { variant: 'Linear', color: 'black' },
   });
-  const selectedBrowseItem = dataExplore.find((browse) => browse.id === browseId);
+  const [selectedBrowseItem, setSelectedBlog] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const actionSheetRef = useRef(null);
+
+  const openActionSheet = () => {
+    actionSheetRef.current?.show();
+  };
+
+  const closeActionSheet = () => {
+    actionSheetRef.current?.hide();
+  };
+
+  useEffect(() => {
+    getBlogById();
+  }, [browseId]);
+
+  const getBlogById = async () => {
+    try {
+      const response = await axios.get(
+        `https://65644966ceac41c0761dccb1.mockapi.io/nusantaraart/browseData/${browseId}`,
+      );
+      setSelectedBlog(response.data);
+      setLoading(false);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const navigateEdit = () => {
+    closeActionSheet()
+    navigation.navigate('EditBrowse', { browseId })
+  }
+  const handleDelete = async () => {
+    await axios.delete(`https://65644966ceac41c0761dccb1.mockapi.io/nusantaraart/browseData/${browseId}`)
+      .then(() => {
+        closeActionSheet()
+        navigation.navigate('Browse');
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
   const navigation = useNavigation();
   const toggleIcon = iconName => {
     setIconStates(prevStates => ({
@@ -34,7 +78,7 @@ const BrowseDetail = ({ route }) => {
             size={24}
           />
         </TouchableOpacity>
-        <TouchableOpacity style={{ backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 50, padding: 10 }}>
+        <TouchableOpacity onPress={openActionSheet} style={{ backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 50, padding: 10 }}>
           <More
             color={'white'}
             variant="Linear"
@@ -42,55 +86,59 @@ const BrowseDetail = ({ route }) => {
           />
         </TouchableOpacity>
       </View>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-        }}>
-        <ImageBackground
-          style={styles.image}
-          source={{
-            uri: selectedBrowseItem.image,
-          }}
-          resizeMode={'cover'}>
-          {/* <View style={styles.darkOverlay}></View> */}
-        </ImageBackground>
-        <View style={{ paddingHorizontal: 24 }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              marginTop: 15,
-            }}>
-            <View style={{ flexDirection: 'row' }}>
-              <Image
-                source={{
-                  uri: 'https://templates.iqonic.design/sofbox-admin/sofbox-dashboard-html/html/images/user/1.jpg',
-                }}
-                style={styles.profileImage}
-              />
-              <View style={{ justifyContent: 'center' }}>
-                <Text style={styles.userName}>{selectedBrowseItem.createdBy}</Text>
-                <Text style={styles.userFollower}>100 Pengikut</Text>
-              </View>
-            </View>
-            <TouchableOpacity style={{ backgroundColor: 'white', borderWidth: 1, justifyContent: 'center', paddingHorizontal: 24, borderRadius: 25 }}>
-              <Text style={{ color: 'rgb(255, 125, 0)', fontSize: 14, }}>Ikuti</Text>
-            </TouchableOpacity>
-          </View>
-          <View>
+      {loading ? (<View style={{ justifyContent: 'center', alignItems: 'center', flex: 1 }}>
+        <ActivityIndicator size={'large'} color={'#FFC600'} />
+      </View>) : (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+          }}>
+          <ImageBackground
+            style={styles.image}
+            source={{
+              uri: selectedBrowseItem?.image,
+            }}
+            resizeMode={'cover'}>
+            {/* <View style={styles.darkOverlay}></View> */}
+          </ImageBackground>
+          <View style={{ paddingHorizontal: 24 }}>
             <View
               style={{
                 flexDirection: 'row',
                 justifyContent: 'space-between',
-                marginTop: 25,
+                marginTop: 15,
               }}>
-              <Text style={styles.category}>{selectedBrowseItem.category}</Text>
+              <View style={{ flexDirection: 'row' }}>
+                <Image
+                  source={{
+                    uri: 'https://templates.iqonic.design/sofbox-admin/sofbox-dashboard-html/html/images/user/1.jpg',
+                  }}
+                  style={styles.profileImage}
+                />
+                <View style={{ justifyContent: 'center' }}>
+                  <Text style={styles.userName}>{selectedBrowseItem?.createdBy}</Text>
+                  <Text style={styles.userFollower}>100 Pengikut</Text>
+                </View>
+              </View>
+              <TouchableOpacity style={{ backgroundColor: 'white', borderWidth: 1, justifyContent: 'center', paddingHorizontal: 24, borderRadius: 25 }}>
+                <Text style={{ color: 'rgb(255, 125, 0)', fontSize: 14, }}>Ikuti</Text>
+              </TouchableOpacity>
             </View>
-            <Text style={styles.title}>{selectedBrowseItem.name}</Text>
-            <Text style={styles.content}>{selectedBrowseItem.description}</Text>
+            <View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  marginTop: 25,
+                }}>
+                <Text style={styles.category}>{selectedBrowseItem?.category.name}</Text>
+              </View>
+              <Text style={styles.title}>{selectedBrowseItem?.name}</Text>
+              <Text style={styles.content}>{selectedBrowseItem?.description}</Text>
+            </View>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      )}
       <View style={styles.bottomBar}>
         <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
           <TouchableOpacity onPress={() => toggleIcon('liked')}>
@@ -124,6 +172,67 @@ const BrowseDetail = ({ route }) => {
           />
         </TouchableOpacity>
       </View>
+      <ActionSheet
+        ref={actionSheetRef}
+        containerStyle={{
+          borderTopLeftRadius: 25,
+          borderTopRightRadius: 25,
+        }}
+        indicatorStyle={{
+          width: 100,
+        }}
+        gestureEnabled={true}
+        defaultOverlayOpacity={0.3}>
+        <TouchableOpacity
+          style={{
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingVertical: 15,
+          }}
+          onPress={navigateEdit}
+          >
+          <Text
+            style={{
+              
+              color: 'black',
+              fontSize: 18,
+            }}>
+            Edit
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingVertical: 15,
+          }}
+          onPress={handleDelete}>
+          <Text
+            style={{
+              
+              color: 'black',
+              fontSize: 18,
+            }}>
+            Delete
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingVertical: 15,
+          }}
+          onPress={closeActionSheet}>
+          <Text
+            style={{
+              
+              color: 'red',
+              fontSize: 18,
+            }}>
+            Cancel
+          </Text>
+        </TouchableOpacity>
+      </ActionSheet>
     </View>
   );
 };

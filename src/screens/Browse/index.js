@@ -1,26 +1,30 @@
-import React, { useState } from 'react';
-import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity, TextInput, ImageBackground } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity, TextInput, ImageBackground, RefreshControl, ActivityIndicator } from 'react-native';
 import { dataExplore, dataFeed, dataGaleri, dataKategori, kategoriArr } from '../../../data';
 import { Heart, SearchNormal, Add } from 'iconsax-react-native';
-import { useNavigation } from '@react-navigation/native';
-import { ListBrowse } from '../../components';
-const Card = ({ id, title, image }) => (
-  <TouchableOpacity style={styles.card}>
-    <ImageBackground source={{ uri: image }} style={styles.cardImage}>
-      <View style={styles.darkOverlay}></View>
-      <View style={styles.cardIcon}>
-        <Text style={styles.cardTitle}>{title}</Text>
-      </View>
-    </ImageBackground>
+import axios from 'axios';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { ScrollView } from 'react-native-gesture-handler';
 
-  </TouchableOpacity>
-);
+const ItemCard = ({ item }) => {
+  const navigation = useNavigation();
+  return (
+    <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('BrowseDetail', { browseId: item.id })}>
+      <ImageBackground source={{ uri: item.image }} style={styles.cardImage}>
+        <View style={styles.darkOverlay}></View>
+        <View style={styles.cardIcon}>
+          <Text style={styles.cardTitle}>{item.name}</Text>
+        </View>
+      </ImageBackground>
+    </TouchableOpacity>
+  );
+};
 
 const ItemCategory = ({ item, onPress, color }) => {
   return (
     <TouchableOpacity onPress={onPress}>
-      <View style={{...category.item, backgroundColor: color}}>
-        <Text style={{ ...category.title, color:'black' }}>{item.name}</Text>
+      <View style={{ ...category.item, backgroundColor: color }}>
+        <Text style={{ ...category.title, color: 'black' }}>{item.name}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -52,7 +56,43 @@ const FlatListCategory = () => {
 
 export default function BrowseScreen() {
   const navigation = useNavigation();
+  const [loading, setLoading] = useState(true);
+  const [browseData, setBrowseData] = useState([]);
   const [searchText, setSearchText] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const getDataBrowse = async () => {
+    try {
+      const response = await axios.get(
+        'https://65644966ceac41c0761dccb1.mockapi.io/nusantaraart/browseData',
+      );
+      setBrowseData(response.data);
+      setLoading(false);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => {
+      getDataBrowse()
+      setRefreshing(false);
+    }, 1500);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      getDataBrowse();
+    }, [])
+  );
+
+  const renderItem = ({ item }) => {
+    return (
+      <ItemCard
+        item={item}
+      />
+    );
+  };
 
   const handleSearchPress = (text) => {
     setSearchText(text);
@@ -77,9 +117,25 @@ export default function BrowseScreen() {
         <Text style={{ color: 'black', fontSize: 16, fontWeight: 'bold', marginBottom: 10, }} >Kategori</Text>
         <FlatListCategory />
       </View>
-      <View style={{ paddingHorizontal: 16, }}>
-        <Text style={{ color: 'black', fontSize: 16, fontWeight: 'bold', marginHorizontal: 8 }}>Jelajahi Seni</Text>
-        <ListBrowse data={dataExplore} />
+      <View style={{ paddingHorizontal: 24, }}>
+        <Text style={{ color: 'black', fontSize: 16, fontWeight: 'bold' }}>Jelajahi Seni</Text>
+        <ScrollView
+          contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap' }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          {loading ? (
+            <View style={{ flex:1, justifyContent:'center', marginTop: 20 }}>
+              <ActivityIndicator size={'large'} color={'#FFC600'} />
+            </View>
+          ) : browseData.length > 0 ? (
+            browseData.map((item, index) => (
+              <ItemCard item={item} key={index} />
+            ))
+          ) : (<Text style={{ color: 'black', marginTop: 20, textAlign: 'center' }}>Tidak Ada Data</Text>)}
+        </ScrollView>
       </View>
       <TouchableOpacity
         style={styles.floatingButton}
@@ -129,10 +185,11 @@ const styles = StyleSheet.create({
     height: 45,
   },
   card: {
-    flex: 1,
-    margin: 8,
+    marginRight: 6,
     borderRadius: 10,
     overflow: 'hidden',
+    width: '48%',
+    marginTop: 20
   },
   cardImage: {
     width: '100%',
@@ -148,7 +205,7 @@ const styles = StyleSheet.create({
     padding: 15,
     position: 'absolute',
     bottom: 100,
-    right: 24,
+    right: 20,
     borderRadius: 10,
     shadowColor: '#FFE58C',
     shadowOffset: {

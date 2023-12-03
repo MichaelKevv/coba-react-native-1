@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,29 +12,9 @@ import { ArrowLeft } from "iconsax-react-native";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 
-const AddBrowseForm = () => {
-  const [loading, setLoading] = useState(false);
-  const handleUpload = async () => {
-    setLoading(true);
-    try {
-      await axios.post('https://65644966ceac41c0761dccb1.mockapi.io/nusantaraart/browseData', {
-        image,
-        name: blogData.title,
-        category: blogData.category,
-        description: blogData.content,
-      })
-        .then(function (response) {
-          console.log(response);
-        })
-        .catch(function (error) {
-          console.log(error);
-        });
-      setLoading(false);
-      navigation.navigate('Profile');
-    } catch (e) {
-      console.log(e);
-    }
-  };
+const EditBrowseForm = ({ route }) => {
+  const { browseId } = route.params;
+
   const dataCategory = [
     { id: 1, name: "Lukisan" },
     { id: 2, name: "Patung" },
@@ -55,6 +35,52 @@ const AddBrowseForm = () => {
   };
   const [image, setImage] = useState(null);
   const navigation = useNavigation();
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    getBlogById();
+  }, [browseId]);
+
+  const getBlogById = async () => {
+    try {
+      const response = await axios.get(
+        `https://65644966ceac41c0761dccb1.mockapi.io/nusantaraart/browseData/${browseId}`,
+      );
+      setBlogData({
+        title: response.data.name,
+        content: response.data.description,
+        category: {
+          id: response.data.category.id,
+          name: response.data.category.name
+        }
+      })
+      setImage(response.data.image)
+      setLoading(false);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const handleUpdate = async () => {
+    setLoading(true);
+    try {
+      await axios
+        .put(`https://65644966ceac41c0761dccb1.mockapi.io/nusantaraart/browseData/${browseId}`, {
+          image,
+          name: blogData.title,
+          category: blogData.category,
+          description: blogData.content,
+        })
+        .then(function (response) {
+          console.log(response);
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
+      setLoading(false);
+      navigation.navigate('Browse');
+    } catch (e) {
+      console.log(e);
+    }
+  };
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -62,7 +88,7 @@ const AddBrowseForm = () => {
           <ArrowLeft color={'black'} variant="Linear" size={24} />
         </TouchableOpacity>
         <View style={{ flex: 1, alignItems: "center" }}>
-          <Text style={styles.title}>Postingan Baru</Text>
+          <Text style={styles.title}>Edit Postingan</Text>
         </View>
       </View>
       <ScrollView
@@ -134,9 +160,9 @@ const AddBrowseForm = () => {
         </View>
         {loading ? (
           <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color={'blue'} />
+            <ActivityIndicator size="large" color={'#FFC600'} />
           </View>
-        ) : (<TouchableOpacity style={styles.button} onPress={handleUpload}>
+        ) : (<TouchableOpacity style={styles.button} onPress={handleUpdate}>
           <Text style={styles.buttonLabel}>Upload</Text>
         </TouchableOpacity>)}
       </ScrollView>
@@ -144,7 +170,7 @@ const AddBrowseForm = () => {
   );
 };
 
-export default AddBrowseForm;
+export default EditBrowseForm;
 
 const styles = StyleSheet.create({
   container: {
