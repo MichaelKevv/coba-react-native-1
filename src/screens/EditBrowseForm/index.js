@@ -7,10 +7,14 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  Image
 } from "react-native";
-import { ArrowLeft } from "iconsax-react-native";
+import { ArrowLeft, Add, AddSquare } from "iconsax-react-native";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
+import ImagePicker from 'react-native-image-crop-picker';
+import storage from '@react-native-firebase/storage';
+import firestore from '@react-native-firebase/firestore';
 
 const EditBrowseForm = ({ route }) => {
   const { browseId } = route.params;
@@ -34,53 +38,126 @@ const EditBrowseForm = ({ route }) => {
     });
   };
   const [image, setImage] = useState(null);
+  const [oldImage, setOldImage] = useState(null);
   const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    getBlogById();
-  }, [browseId]);
+  // useEffect(() => {
+  //   getBlogById();
+  // }, [browseId]);
 
-  const getBlogById = async () => {
-    try {
-      const response = await axios.get(
-        `https://65644966ceac41c0761dccb1.mockapi.io/nusantaraart/browseData/${browseId}`,
-      );
-      setBlogData({
-        title: response.data.name,
-        content: response.data.description,
-        category: {
-          id: response.data.category.id,
-          name: response.data.category.name
+  // const getBlogById = async () => {
+  //   try {
+  //     const response = await axios.get(
+  //       `https://65644966ceac41c0761dccb1.mockapi.io/nusantaraart/browseData/${browseId}`,
+  //     );
+  //     setBlogData({
+  //       title: response.data.name,
+  //       content: response.data.description,
+  //       category: {
+  //         id: response.data.category.id,
+  //         name: response.data.category.name
+  //       }
+  //     })
+  //     setImage(response.data.image)
+  //     setLoading(false);
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
+  useEffect(() => {
+    const subscriber = firestore()
+      .collection('browse')
+      .doc(browseId)
+      .onSnapshot(documentSnapshot => {
+        const blogData = documentSnapshot.data();
+        if (blogData) {
+          console.log('Browse data: ', blogData);
+          setBlogData({
+            title: blogData.name,
+            content: blogData.description,
+            category: {
+              id: blogData.category.id,
+              name: blogData.category.name,
+            },
+          });
+          setOldImage(blogData.image);
+          setImage(blogData.image);
+          setLoading(false);
+        } else {
+          console.log(`Browse with ID ${browseId} not found.`);
         }
+      });
+    setLoading(false);
+    return () => subscriber();
+  }, [browseId]);
+  const handleImagePick = async () => {
+    ImagePicker.openPicker({
+      width: 1000,
+      height: 1000,
+      cropping: true,
+    })
+      .then(image => {
+        console.log(image);
+        setImage(image.path);
       })
-      setImage(response.data.image)
-      setLoading(false);
-    } catch (error) {
-      console.error(error);
-    }
+      .catch(error => {
+        console.log(error);
+      });
   };
+
   const handleUpdate = async () => {
     setLoading(true);
+    let filename = image.substring(image.lastIndexOf('/') + 1);
+    const extension = filename.split('.').pop();
+    const name = filename.split('.').slice(0, -1).join('.');
+    filename = name + Date.now() + '.' + extension;
+    const reference = storage().ref(`browseimages/${filename}`);
     try {
-      await axios
-        .put(`https://65644966ceac41c0761dccb1.mockapi.io/nusantaraart/browseData/${browseId}`, {
-          image,
-          name: blogData.title,
-          category: blogData.category,
-          description: blogData.content,
-        })
-        .then(function (response) {
-          console.log(response);
-        })
-        .catch(function (error) {
-          console.log(error);
-        });
+      if (image !== oldImage && oldImage) {
+        const oldImageRef = storage().refFromURL(oldImage);
+        await oldImageRef.delete();
+      }
+      if (image !== oldImage) {
+        await reference.putFile(image);
+      }
+      const url =
+        image !== oldImage ? await reference.getDownloadURL() : oldImage;
+      await firestore().collection('browse').doc(browseId).update({
+        image: url,
+        name: blogData.title,
+        category: blogData.category,
+        description: blogData.content,
+        createdBy: "Admin",
+      });
       setLoading(false);
-      navigation.navigate('Browse');
-    } catch (e) {
-      console.log(e);
+      console.log('browse Updated!');
+      navigation.navigate('BrowseDetail', { browseId });
+    } catch (error) {
+      console.log(error);
     }
   };
+  // const handleUpdate = async () => {
+  //   setLoading(true);
+  //   try {
+  //     await axios
+  //       .put(`https://65644966ceac41c0761dccb1.mockapi.io/nusantaraart/browseData/${browseId}`, {
+  //         image,
+  //         name: blogData.title,
+  //         category: blogData.category,
+  //         description: blogData.content,
+  //       })
+  //       .then(function (response) {
+  //         console.log(response);
+  //       })
+  //       .catch(function (error) {
+  //         console.log(error);
+  //       });
+  //     setLoading(false);
+  //     navigation.navigate('Browse');
+  //   } catch (e) {
+  //     console.log(e);
+  //   }
+  // };
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -120,16 +197,6 @@ const EditBrowseForm = ({ route }) => {
             style={textInput.content}
           />
         </View>
-        <Text style={{ color: 'black' }}>Foto</Text>
-        <View style={[textInput.border]}>
-          <TextInput
-            placeholder="Masukkan Foto Postingan Anda"
-            value={image}
-            onChangeText={(text) => setImage(text)}
-            placeholderTextColor={'rgba(128, 128, 128, 0.6)'}
-            style={textInput.content}
-          />
-        </View>
         <Text style={{ color: 'black' }}>Kategori</Text>
         <View style={[textInput.border]}>
           <View style={category.container}>
@@ -158,14 +225,65 @@ const EditBrowseForm = ({ route }) => {
             })}
           </View>
         </View>
-        {loading ? (
-          <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color={'#FFC600'} />
+        <Text style={{ color: 'black' }}>Foto</Text>
+        {image ? (
+          <View style={{ position: 'relative' }}>
+            <Image
+              style={{ width: '100%', height: 200, borderRadius: 5 }}
+              source={{
+                uri: image,
+              }}
+              resizeMode={'cover'}
+            />
+            <TouchableOpacity
+              style={{
+                position: 'absolute',
+                top: -5,
+                right: -5,
+                backgroundColor: '#FFC600',
+                borderRadius: 25,
+              }}
+              onPress={() => setImage(null)}>
+              <Add
+                size={20}
+                variant="Linear"
+                color={'white'}
+                style={{ transform: [{ rotate: '45deg' }] }}
+              />
+            </TouchableOpacity>
           </View>
-        ) : (<TouchableOpacity style={styles.button} onPress={handleUpdate}>
-          <Text style={styles.buttonLabel}>Upload</Text>
-        </TouchableOpacity>)}
+        ) : (
+          <TouchableOpacity onPress={handleImagePick}>
+            <View
+              style={[
+                textInput.border,
+                {
+                  gap: 10,
+                  paddingVertical: 30,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                },
+              ]}>
+              <AddSquare color={'rgba(128, 128, 128, 0.6)'} variant="Linear" size={42} />
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: 'rgba(128, 128, 128, 0.6)',
+                }}>
+                Upload Foto
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
+
       </ScrollView>
+      {loading ? (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color={'#FFC600'} />
+        </View>
+      ) : (<TouchableOpacity style={styles.button} onPress={handleUpdate}>
+        <Text style={styles.buttonLabel}>Upload</Text>
+      </TouchableOpacity>)}
     </View>
   );
 };
@@ -191,7 +309,8 @@ const styles = StyleSheet.create({
     color: 'black',
   },
   button: {
-    marginTop: 100,
+    marginHorizontal: 24,
+    marginBottom: 10,
     paddingHorizontal: 20,
     paddingVertical: 10,
     backgroundColor: '#FFC600',

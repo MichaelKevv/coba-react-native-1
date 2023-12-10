@@ -5,6 +5,8 @@ import { useNavigation } from '@react-navigation/native';
 import { dataExplore } from '../../../data';
 import axios from 'axios';
 import ActionSheet from 'react-native-actions-sheet';
+import firestore from '@react-native-firebase/firestore';
+import storage from '@react-native-firebase/storage';
 
 const BrowseDetail = ({ route }) => {
   const { browseId } = route.params;
@@ -25,36 +27,76 @@ const BrowseDetail = ({ route }) => {
     actionSheetRef.current?.hide();
   };
 
-  useEffect(() => {
-    getBlogById();
-  }, [browseId]);
+  // useEffect(() => {
+  //   getBlogById();
+  // }, [browseId]);
 
-  const getBlogById = async () => {
-    try {
-      const response = await axios.get(
-        `https://65644966ceac41c0761dccb1.mockapi.io/nusantaraart/browseData/${browseId}`,
-      );
-      setSelectedBlog(response.data);
-      setLoading(false);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  // const getBlogById = async () => {
+  //   try {
+  //     const response = await axios.get(
+  //       `https://65644966ceac41c0761dccb1.mockapi.io/nusantaraart/browseData/${browseId}`,
+  //     );
+  //     setSelectedBlog(response.data);
+  //     setLoading(false);
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
+
+  useEffect(() => {
+    const subscriber = firestore()
+      .collection('browse')
+      .doc(browseId)
+      .onSnapshot(documentSnapshot => {
+        const blogData = documentSnapshot.data();
+        if (blogData) {
+          console.log('Browse data: ', blogData);
+          setSelectedBlog(blogData);
+        } else {
+          console.log(`Browse with ID ${browseId} not found.`);
+        }
+      });
+    setLoading(false);
+    return () => subscriber();
+  }, [browseId]);
 
   const navigateEdit = () => {
     closeActionSheet()
     navigation.navigate('EditBrowse', { browseId })
   }
+  // const handleDelete = async () => {
+  //   await axios.delete(`https://65644966ceac41c0761dccb1.mockapi.io/nusantaraart/browseData/${browseId}`)
+  //     .then(() => {
+  //       closeActionSheet()
+  //       navigation.navigate('Browse');
+  //     })
+  //     .catch((error) => {
+  //       console.error(error);
+  //     });
+  // }
   const handleDelete = async () => {
-    await axios.delete(`https://65644966ceac41c0761dccb1.mockapi.io/nusantaraart/browseData/${browseId}`)
-      .then(() => {
-        closeActionSheet()
-        navigation.navigate('Browse');
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  }
+    setLoading(true);
+    try {
+      await firestore()
+        .collection('browse')
+        .doc(browseId)
+        .delete()
+        .then(() => {
+          console.log('Blog deleted!');
+        });
+      if (selectedBrowseItem?.image) {
+        const imageRef = storage().refFromURL(selectedBrowseItem?.image);
+        await imageRef.delete();
+      }
+      console.log('Blog deleted!');
+      closeActionSheet();
+      setSelectedBlog(null);
+      setLoading(false)
+      navigation.navigate('Browse');
+    } catch (error) {
+      console.error(error);
+    }
+  };
   const navigation = useNavigation();
   const toggleIcon = iconName => {
     setIconStates(prevStates => ({

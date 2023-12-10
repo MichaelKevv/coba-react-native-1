@@ -1,11 +1,11 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity, TextInput, ImageBackground, RefreshControl, ActivityIndicator } from 'react-native';
 import { dataExplore, dataFeed, dataGaleri, dataKategori, kategoriArr } from '../../../data';
 import { Heart, SearchNormal, Add } from 'iconsax-react-native';
 import axios from 'axios';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { ScrollView } from 'react-native-gesture-handler';
-
+import firestore from '@react-native-firebase/firestore';
 const ItemCard = ({ item }) => {
   const navigation = useNavigation();
   return (
@@ -60,39 +60,41 @@ export default function BrowseScreen() {
   const [browseData, setBrowseData] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  const getDataBrowse = async () => {
-    try {
-      const response = await axios.get(
-        'https://65644966ceac41c0761dccb1.mockapi.io/nusantaraart/browseData',
-      );
-      setBrowseData(response.data);
-      setLoading(false);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  useEffect(() => {
+    const subscriber = firestore()
+      .collection('browse')
+      .onSnapshot(querySnapshot => {
+        const browse = [];
+        querySnapshot.forEach(documentSnapshot => {
+          browse.push({
+            ...documentSnapshot.data(),
+            id: documentSnapshot.id,
+          });
+        });
+        setBrowseData(browse);
+        setLoading(false);
+      });
+    return () => subscriber();
+  }, []);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => {
-      getDataBrowse()
+      firestore()
+        .collection('browse')
+        .onSnapshot(querySnapshot => {
+          const browse = [];
+          querySnapshot.forEach(documentSnapshot => {
+            browse.push({
+              ...documentSnapshot.data(),
+              id: documentSnapshot.id,
+            });
+          });
+          setBlogData(browse);
+        });
       setRefreshing(false);
     }, 1500);
   }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      getDataBrowse();
-    }, [])
-  );
-
-  const renderItem = ({ item }) => {
-    return (
-      <ItemCard
-        item={item}
-      />
-    );
-  };
 
   const handleSearchPress = (text) => {
     setSearchText(text);
